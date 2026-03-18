@@ -39,8 +39,7 @@ RUN pnpm install --frozen-lockfile --prod
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/dist/public ./client/dist
 
 # Create a startup script
 RUN echo '#!/bin/bash\n\
