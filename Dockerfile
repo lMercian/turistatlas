@@ -6,8 +6,9 @@ WORKDIR /app
 # Install build dependencies
 RUN apk add --no-cache python3 make g++
 
-# Copy package files
+# Copy package files and patches
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 # Install dependencies
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
@@ -29,8 +30,9 @@ RUN apk add --no-cache mysql-client bash
 # Install pnpm
 RUN npm install -g pnpm
 
-# Copy package files from builder
+# Copy package files and patches from builder
 COPY package.json pnpm-lock.yaml ./
+COPY --from=builder /app/patches ./patches
 
 # Install production dependencies only
 RUN pnpm install --frozen-lockfile --prod
