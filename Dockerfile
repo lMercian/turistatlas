@@ -45,15 +45,29 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/dist/public ./client/dist
 
-# Create startup script using RUN with proper shell
+# Create startup script with environment variable mapping
 RUN cat > /app/start.sh << 'EOF'
 #!/bin/bash
 set -e
 
+# Map Coolify environment variables to Manus template variables
+export VITE_APP_ID="${VITE_APP_ID:-}"
+export VITE_OAUTH_PORTAL_URL="${VITE_OAUTH_SERVER_URL:-}"
+export OWNER_OPEN_ID="${OWNER_OPEN_ID:-}"
+export OWNER_NAME="${OWNER_NAME:-}"
+export BUILT_IN_FORGE_API_URL="${BUILT_IN_FORGE_API_URL:-}"
+export BUILT_IN_FORGE_API_KEY="${BUILT_IN_FORGE_API_KEY:-}"
+export VITE_FRONTEND_FORGE_API_KEY="${VITE_FRONTEND_FORGE_API_KEY:-}"
+export VITE_FRONTEND_FORGE_API_URL="${VITE_FRONTEND_FORGE_API_URL:-}"
+export VITE_ANALYTICS_ENDPOINT="${VITE_ANALYTICS_ENDPOINT:-}"
+export VITE_ANALYTICS_WEBSITE_ID="${VITE_ANALYTICS_WEBSITE_ID:-}"
+export VITE_APP_TITLE="${VITE_APP_TITLE:-Torius Atlas}"
+export VITE_APP_LOGO="${VITE_APP_LOGO:-}"
+
 echo "Running database migrations..."
 pnpm db:push || true
 
-echo "Starting application on port 3009..."
+echo "Starting application on port ${PORT:-3009}..."
 node dist/index.js
 EOF
 RUN chmod +x /app/start.sh
