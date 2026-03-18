@@ -32,7 +32,11 @@ RUN npm install -g pnpm
 
 # Copy package files and patches from builder
 COPY package.json pnpm-lock.yaml ./
-COPY --from=builder /app/patches ./patches
+COPY patches ./patches
+
+# Copy drizzle config and schema
+COPY drizzle.config.ts ./
+COPY drizzle ./drizzle
 
 # Install ALL dependencies (including dev) for drizzle-kit and vite
 RUN pnpm install --frozen-lockfile
