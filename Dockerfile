@@ -24,8 +24,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies, MySQL client, and curl for healthcheck
-RUN apk add --no-cache mysql-client bash curl
+# Install runtime dependencies and MySQL client
+RUN apk add --no-cache mysql-client bash
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -66,10 +66,6 @@ RUN chmod +x /app/start.sh
 
 # Expose port
 EXPOSE 3009
-
-# Health check using curl
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3009/ || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]
