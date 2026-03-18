@@ -24,8 +24,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies and MySQL client
-RUN apk add --no-cache mysql-client bash
+# Install runtime dependencies
+RUN apk add --no-cache bash
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -46,20 +46,10 @@ RUN cat > /app/start.sh << 'EOF'
 #!/bin/bash
 set -e
 
-echo "Waiting for database to be ready..."
-for i in {1..30}; do
-  if mysql -h "$DATABASE_HOST" -u "$DATABASE_USER" -p"$DATABASE_PASSWORD" -e "SELECT 1" > /dev/null 2>&1; then
-    echo "Database is ready!"
-    break
-  fi
-  echo "Attempt $i/30 - Database not ready yet..."
-  sleep 2
-done
-
 echo "Running database migrations..."
 pnpm db:push || true
 
-echo "Starting application..."
+echo "Starting application on port 3009..."
 node dist/index.js
 EOF
 RUN chmod +x /app/start.sh
