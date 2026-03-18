@@ -24,8 +24,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies and MySQL client
-RUN apk add --no-cache mysql-client bash
+# Install runtime dependencies, MySQL client, and curl for healthcheck
+RUN apk add --no-cache mysql-client bash curl
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -41,33 +41,35 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/dist/public ./client/dist
 
-# Create a startup script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Waiting for database to be ready..."\n\
-for i in {1..30}; do\n\
-  if mysql -h "$DATABASE_HOST" -u "$DATABASE_USER" -p"$DATABASE_PASSWORD" -e "SELECT 1" > /dev/null 2>&1; then\n\
-    echo "Database is ready!"\n\
-    break\n\
-  fi\n\
-  echo "Attempt $i/30 - Database not ready yet..."\n\
-  sleep 2\n\
-done\n\
-\n\
-echo "Running database migrations..."\n\
-pnpm db:push || true\n\
-\n\
-echo "Starting application..."\n\
-node dist/index.js\n\
-' > /app/start.sh && chmod +x /app/start.sh
+# Create startup script using RUN with proper shell
+RUN cat > /app/start.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "Waiting for database to be ready..."
+for i in {1..30}; do
+  if mysql -h "$DATABASE_HOST" -u "$DATABASE_USER" -p"$DATABASE_PASSWORD" -e "SELECT 1" > /dev/null 2>&1; then
+    echo "Database is ready!"
+    break
+  fi
+  echo "Attempt $i/30 - Database not ready yet..."
+  sleep 2
+done
+
+echo "Running database migrations..."
+pnpm db:push || true
+
+echo "Starting application..."
+node dist/index.js
+EOF
+RUN chmod +x /app/start.sh
 
 # Expose port
 EXPOSE 3009
 
-# Health check
+# Health check using curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD mysql -h "$DATABASE_HOST" -u "$DATABASE_USER" -p"$DATABASE_PASSWORD" -e "SELECT 1" > /dev/null 2>&1 || exit 1
+  CMD curl -f http://localhost:3009/ || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]
