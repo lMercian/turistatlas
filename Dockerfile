@@ -34,8 +34,8 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
 COPY --from=builder /app/patches ./patches
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install ALL dependencies (including dev) for drizzle-kit and vite
+RUN pnpm install --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
